@@ -168,6 +168,44 @@ func Provider() *schema.Provider {
 					},
 				},
 			},
+			"auth_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Configuration for simple login POST request body that yields a header token",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"principal": {
+							Type:        schema.TypeString,
+							Description: "property representing the security principal in the login POST request",
+							Optional:    true,
+							Default:     "username",
+						},
+						"credential": {
+							Type:        schema.TypeString,
+							Description: "property representing the security credential in the login POST request",
+							Optional:    true,
+							Default:     "password",
+						},
+						"endpoint": {
+							Type:        schema.TypeString,
+							Description: "where to send the login POST request",
+							Required:    true,
+						},
+						"auth_header": {
+							Type:        schema.TypeString,
+							Description: "custom header to send in subsequent requests with value of {token}",
+							Required:    true,
+						},
+						"token_path": {
+							Type:        schema.TypeString,
+							Description: "path/to/token in POST response",
+							Optional:    true,
+							Default:     "token",
+						},
+					},
+				},
+			},
 			"cert_string": {
 				Type:        schema.TypeString,
 				Optional:    true,
