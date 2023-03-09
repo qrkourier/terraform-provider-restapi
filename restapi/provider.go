@@ -48,12 +48,6 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("REST_API_ZITI_PASSWORD", nil),
 				Description: "When set, will use this password for Ziti auth to the API.",
 			},
-			"ca_certs": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("REST_API_CA_CERTS", nil),
-				Description: "One or more CA certs to trust as a PEM bundle.",
-			},
 			"headers": {
 				Type:        schema.TypeMap,
 				Elem:        schema.TypeString,
@@ -186,6 +180,12 @@ func Provider() *schema.Provider {
 					},
 				},
 			},
+			"cacerts_string": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REST_API_CACERTS_STRING", nil),
+				Description: "One or more CA certs to trust as a PEM bundle.",
+			},
 			"cert_string": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -295,6 +295,9 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 	}
 	if v, ok := d.GetOk("key_file"); ok {
 		opt.keyFile = v.(string)
+	}
+	if v, ok := d.GetOk("cacerts_string"); ok {
+		opt.caCertsString = v.(string)
 	}
 	if v, ok := d.GetOk("cert_string"); ok {
 		opt.certString = v.(string)

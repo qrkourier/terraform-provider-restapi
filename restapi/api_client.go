@@ -3,8 +3,8 @@ package restapi
 import (
 	"bytes"
 	"context"
-	"crypto/x509"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -25,7 +25,7 @@ import (
 type apiClientOpt struct {
 	uri                 string
 	insecure            bool
-	ca_certs			string
+	caCertsString       string
 	username            string
 	password            string
 	headers             map[string]string
@@ -60,12 +60,12 @@ type APIClient struct {
 	httpClient          *http.Client
 	uri                 string
 	insecure            bool
-	ca_certs 			string
+	caCertsString       string
 	username            string
 	password            string
-	ziti_username       string
-	ziti_password       string
-	ziti_token			string
+	zitiUsername        string
+	zitiPassword        string
+	zitiToken           string
 	headers             map[string]string
 	idAttribute         string
 	createMethod        string
@@ -142,7 +142,7 @@ func NewAPIClient(opt *apiClientOpt) (*APIClient, error) {
 		tlsConfig.RootCAs = x509.NewCertPool()
 	}
 
-	tlsConfig.RootCAs.AppendCertsFromPEM([]byte(opt.ca_certs))
+	tlsConfig.RootCAs.AppendCertsFromPEM([]byte(opt.caCertsString))
 
 	tr := &http.Transport{
 		TLSClientConfig: tlsConfig,
@@ -280,30 +280,31 @@ func (client *APIClient) sendRequest(method string, path string, data string) (s
 		req.SetBasicAuth(client.username, client.password)
 	}
 
-	if client.ziti_username != "" && client.ziti_password != "" {
-		container := gabs.New()
-		_, _ = container.SetP(client.ziti_username, "username")
-		_, _ = container.SetP(client.ziti_password, "password")
-		body := container.String()
+	if client.zitiUsername != "" && client.zitiPassword != "" {
+		if client.zitiToken == "" {
+			container := gabs.New()
+			_, _ = container.SetP(client.zitiUsername, "username")
+			_, _ = container.SetP(client.zitiPassword, "password")
+			body := container.String()
 
-		zitiLogin, err := zitiUtil.EdgeControllerLogin(client.uri, client.ca_certs, body, log.Writer(), false, 30, true)
-		if err != nil {
-			return "", err
+			zitiLogin, err := zitiUtil.EdgeControllerLogin(client.uri, client.caCertsString, body, log.Writer(), false, 30, true)
+			if err != nil {
+				return "", err
+			}
+
+			if !zitiLogin.ExistsP("data.token") {
+				return "", fmt.Errorf("no session token returned from login request to %v. Received: %v", client.uri, zitiLogin.String())
+			}
+
+			var ok bool
+			client.zitiToken, ok = zitiLogin.Path("data.token").Data().(string)
+
+			if !ok {
+				return "", fmt.Errorf("session token returned from login request to %v is not in the expected format. Received: %v", client.uri, zitiLogin.String())
+			}
+
 		}
-
-		if !zitiLogin.ExistsP("data.token") {
-			return "", fmt.Errorf("no session token returned from login request to %v. Received: %v", client.uri, zitiLogin.String())
-		}
-
-		var ok bool
-		client.ziti_token, ok = zitiLogin.Path("data.token").Data().(string)
-
-		if !ok {
-			return "", fmt.Errorf("session token returned from login request to %v is not in the expected format. Received: %v", client.uri, zitiLogin.String())
-		}
-
-		req.Header.Set("zt-session",client.ziti_token)
-
+		req.Header.Set("zt-session", client.zitiToken)
 	}
 
 	if client.debug {

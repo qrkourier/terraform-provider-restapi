@@ -1,6 +1,6 @@
-module github.com/Mastercard/terraform-provider-restapi
+module github.com/qrkourier/terraform-provider-restapi
 
-go 1.17
+go 1.19
 
 require (
 	github.com/davecgh/go-spew v1.1.1
@@ -15,7 +15,7 @@ require (
 	github.com/openziti/ziti v0.27.5
 )
 
-	cloud.google.com/go v0.65.0 // indirect
+replace github.com/openziti/ziti => ../ziti
 
 require (
 	cloud.google.com/go v0.99.0 // indirect

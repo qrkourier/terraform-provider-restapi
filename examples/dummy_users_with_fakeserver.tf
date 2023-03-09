@@ -1,6 +1,6 @@
 # In this example, we are using the fakeserver available with this provider
 # to create and manage imaginary users in our imaginary API server
-# https://github.com/Mastercard/terraform-provider-restapi/tree/master/fakeserver
+# https://github.com/qrkourier/terraform-provider-restapi/tree/master/fakeserver
 
 # To use this example fully, start up fakeserver and run this command
 # curl 127.0.0.1:8080/api/objects -X POST -d '{ "id": "8877", "first": "John", "last": "Doe" }'
