@@ -24,7 +24,7 @@ func main() {
 	}
 
 	if debugMode {
-		err := plugin.Debug(context.Background(), "qrkourier/restapi", opts)
+		err := plugin.Debug(context.Background(), "registry.terraform.io/qrkourier/restapi", opts)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
