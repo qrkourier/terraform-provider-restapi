@@ -7,7 +7,8 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"os"
 	"log"
 	"math"
 	"net/http"
@@ -145,7 +146,7 @@ func NewAPIClient(opt *apiClientOpt) (*APIClient, error) {
 		rootCAPool := x509.NewCertPool()
 
 		// read CA certificates and add to the Certificate Pool
-		rootCA, err := ioutil.ReadFile(opt.caCertsFile)
+		rootCA, err := os.ReadFile(opt.caCertsFile)
 		if err != nil {
 			log.Fatalf("reading CA certs file failed : %v", err)
 		}
@@ -370,7 +371,7 @@ func (client *APIClient) sendRequest(method string, path string, data string) (s
 		}
 	}
 
-	bodyBytes, err2 := ioutil.ReadAll(resp.Body)
+	bodyBytes, err2 := io.ReadAll(resp.Body)
 	resp.Body.Close()
 
 	if err2 != nil {

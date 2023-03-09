@@ -9,7 +9,7 @@ builds:
       # goreleaser does not work with CGO, it could also complicate
       # usage by users in CI/CD systems like Terraform Cloud where
       # they are unable to install libraries.
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath
@@ -17,14 +17,14 @@ builds:
       - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
     goos:
       # - freebsd
-      - windows
+      # - windows
       - linux
-      - darwin
+      # - darwin
     goarch:
       - amd64
-      - '386'
-      - arm
-      - arm64
+      # - '386'
+      # - arm
+      # - arm64
     ignore:
       - goos: darwin
         goarch: '386'
