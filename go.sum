@@ -519,6 +519,8 @@ github.com/openziti/identity v1.0.39 h1:CWxDHTkLgVk9zoWvG9Wy8rGycVKT887KDV1alDtJ
 github.com/openziti/identity v1.0.39/go.mod h1:hbO4NYcilj1IH5h2jq2NeDucGxmw+gAgytMKQgFkLPc=
 github.com/openziti/sdk-golang v0.18.30 h1:raZTM4K0C9e+DZuPV401Sbkb3ND/22OJrFASxEr661U=
 github.com/openziti/sdk-golang v0.18.30/go.mod h1:dppY6etaYUVvOJHP1hoHgkZv9Uzfynz6vk6O0czntKk=
+github.com/openziti/ziti v0.27.5 h1:ue1/8odo7YOqLNvhgd2TXot2W53YHtWP+yAezuLl26c=
+github.com/openziti/ziti v0.27.5/go.mod h1:AJ1RRGyUBXh6ePjyAnfI8aCShxOxGmF8H9yoEWaqFMI=
 github.com/parallaxsecond/parsec-client-go v0.0.0-20221025095442-f0a77d263cf9 h1:mOvehYivJ4Aqu2CPe3D3lv8jhqOI9/1o0THxJHBE0qw=
 github.com/parallaxsecond/parsec-client-go v0.0.0-20221025095442-f0a77d263cf9/go.mod h1:gLH27qo/dvMhLTVVyMELpe3Tut7sOfkiDg7ZpeqKwsw=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=

@@ -15,7 +15,7 @@ require (
 	github.com/openziti/ziti v0.27.5
 )
 
-replace github.com/openziti/ziti => ../ziti
+// replace github.com/openziti/ziti => ../ziti
 
 require (
 	cloud.google.com/go v0.99.0 // indirect
