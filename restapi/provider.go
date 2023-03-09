@@ -36,6 +36,24 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("REST_API_PASSWORD", nil),
 				Description: "When set, will use this password for BASIC auth to the API.",
 			},
+			"ziti_username": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REST_API_ZITI_USERNAME", nil),
+				Description: "When set, will use this username for Ziti auth to the API.",
+			},
+			"ziti_password": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REST_API_ZITI_PASSWORD", nil),
+				Description: "When set, will use this password for Ziti auth to the API.",
+			},
+			"ca_certs": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REST_API_CA_CERTS", nil),
+				Description: "One or more CA certs to trust as a PEM bundle.",
+			},
 			"headers": {
 				Type:        schema.TypeMap,
 				Elem:        schema.TypeString,
@@ -164,44 +182,6 @@ func Provider() *schema.Provider {
 								Type: schema.TypeList,
 								Elem: &schema.Schema{Type: schema.TypeString},
 							},
-						},
-					},
-				},
-			},
-			"auth_config": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				MaxItems:    1,
-				Description: "Configuration for simple login POST request body that yields a header token",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"principal": {
-							Type:        schema.TypeString,
-							Description: "property representing the security principal in the login POST request",
-							Optional:    true,
-							Default:     "username",
-						},
-						"credential": {
-							Type:        schema.TypeString,
-							Description: "property representing the security credential in the login POST request",
-							Optional:    true,
-							Default:     "password",
-						},
-						"endpoint": {
-							Type:        schema.TypeString,
-							Description: "where to send the login POST request",
-							Required:    true,
-						},
-						"auth_header": {
-							Type:        schema.TypeString,
-							Description: "custom header to send in subsequent requests with value of {token}",
-							Required:    true,
-						},
-						"token_path": {
-							Type:        schema.TypeString,
-							Description: "path/to/token in POST response",
-							Optional:    true,
-							Default:     "token",
 						},
 					},
 				},

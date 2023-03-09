@@ -3,6 +3,7 @@ package restapi
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -15,6 +16,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Jeffail/gabs"
+	zitiUtil "github.com/openziti/ziti/ziti/util"
 	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/time/rate"
 )
@@ -22,6 +25,7 @@ import (
 type apiClientOpt struct {
 	uri                 string
 	insecure            bool
+	ca_certs			string
 	username            string
 	password            string
 	headers             map[string]string
@@ -51,13 +55,17 @@ type apiClientOpt struct {
 	debug               bool
 }
 
-/*APIClient is a HTTP client with additional controlling fields*/
+/*APIClient is an HTTP client with additional controlling fields*/
 type APIClient struct {
 	httpClient          *http.Client
 	uri                 string
 	insecure            bool
+	ca_certs 			string
 	username            string
 	password            string
+	ziti_username       string
+	ziti_password       string
+	ziti_token			string
 	headers             map[string]string
 	idAttribute         string
 	createMethod        string
@@ -75,7 +83,7 @@ type APIClient struct {
 	oauthConfig         *clientcredentials.Config
 }
 
-//NewAPIClient makes a new api client for RESTful calls
+// NewAPIClient makes a new api client for RESTful calls
 func NewAPIClient(opt *apiClientOpt) (*APIClient, error) {
 	if opt.debug {
 		log.Printf("api_client.go: Constructing debug api_client\n")
@@ -129,6 +137,12 @@ func NewAPIClient(opt *apiClientOpt) (*APIClient, error) {
 		}
 		tlsConfig.Certificates = []tls.Certificate{cert}
 	}
+
+	if tlsConfig.RootCAs == nil {
+		tlsConfig.RootCAs = x509.NewCertPool()
+	}
+
+	tlsConfig.RootCAs.AppendCertsFromPEM([]byte(opt.ca_certs))
 
 	tr := &http.Transport{
 		TLSClientConfig: tlsConfig,
@@ -209,8 +223,11 @@ func (client *APIClient) toString() string {
 	return buffer.String()
 }
 
-/* Helper function that handles sending/receiving and handling
-   of HTTP data in and out. */
+/*
+Helper function that handles sending/receiving and handling
+
+	of HTTP data in and out.
+*/
 func (client *APIClient) sendRequest(method string, path string, data string) (string, error) {
 	fullURI := client.uri + path
 	var req *http.Request
@@ -261,6 +278,32 @@ func (client *APIClient) sendRequest(method string, path string, data string) (s
 	if client.username != "" && client.password != "" {
 		/* ... and fall back to basic auth if configured */
 		req.SetBasicAuth(client.username, client.password)
+	}
+
+	if client.ziti_username != "" && client.ziti_password != "" {
+		container := gabs.New()
+		_, _ = container.SetP(client.ziti_username, "username")
+		_, _ = container.SetP(client.ziti_password, "password")
+		body := container.String()
+
+		zitiLogin, err := zitiUtil.EdgeControllerLogin(client.uri, client.ca_certs, body, log.Writer(), false, 30, true)
+		if err != nil {
+			return "", err
+		}
+
+		if !zitiLogin.ExistsP("data.token") {
+			return "", fmt.Errorf("no session token returned from login request to %v. Received: %v", client.uri, zitiLogin.String())
+		}
+
+		var ok bool
+		client.ziti_token, ok = zitiLogin.Path("data.token").Data().(string)
+
+		if !ok {
+			return "", fmt.Errorf("session token returned from login request to %v is not in the expected format. Received: %v", client.uri, zitiLogin.String())
+		}
+
+		req.Header.Set("zt-session",client.ziti_token)
+
 	}
 
 	if client.debug {
