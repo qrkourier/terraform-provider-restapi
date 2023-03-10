@@ -25,6 +25,7 @@ type apiObjectOpts struct {
 	deletePath    string
 	searchPath    string
 	queryString   string
+	importPath	  string
 	debug         bool
 	readSearch    map[string]string
 	id            string
@@ -45,6 +46,7 @@ type APIObject struct {
 	deletePath    string
 	searchPath    string
 	queryString   string
+	importPath	  string
 	debug         bool
 	readSearch    map[string]string
 	id            string
@@ -119,6 +121,7 @@ func NewAPIObject(iClient *APIClient, opts *apiObjectOpts) (*APIObject, error) {
 		deletePath:    opts.deletePath,
 		searchPath:    opts.searchPath,
 		queryString:   opts.queryString,
+		importPath:    opts.importPath,
 		debug:         opts.debug,
 		readSearch:    opts.readSearch,
 		id:            opts.id,
@@ -195,6 +198,7 @@ func (obj *APIObject) toString() string {
 	buffer.WriteString(fmt.Sprintf("put_path: %s\n", obj.putPath))
 	buffer.WriteString(fmt.Sprintf("delete_path: %s\n", obj.deletePath))
 	buffer.WriteString(fmt.Sprintf("query_string: %s\n", obj.queryString))
+	buffer.WriteString(fmt.Sprintf("import_path: %s\n", obj.importPath))
 	buffer.WriteString(fmt.Sprintf("create_method: %s\n", obj.createMethod))
 	buffer.WriteString(fmt.Sprintf("read_method: %s\n", obj.readMethod))
 	buffer.WriteString(fmt.Sprintf("update_method: %s\n", obj.updateMethod))

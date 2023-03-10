@@ -26,6 +26,11 @@ func dataSourceRestAPI() *schema.Resource {
 				Description: "An optional query string to send when performing the search.",
 				Optional:    true,
 			},
+			"import_path": {
+				Type:        schema.TypeString,
+				Description: "An optional path/id to import and update, not create.",
+				Optional:    true,
+			},
 			"read_query_string": {
 				Type: schema.TypeString,
 				/* Setting to "not-set" helps differentiate between the cases where

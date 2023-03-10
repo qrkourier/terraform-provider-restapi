@@ -114,6 +114,11 @@ func resourceRestAPI() *schema.Resource {
 				Description: "Query string to be included in the path",
 				Optional:    true,
 			},
+			"import_path": {
+				Type:        schema.TypeString,
+				Description: "path/id to import and update, not create",
+				Optional:    true,
+			},
 			"api_data": {
 				Type: schema.TypeMap,
 				Elem: &schema.Schema{
@@ -240,6 +245,15 @@ func resourceRestAPICreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	log.Printf("resource_api_object.go: Create routine called. Object built:\n%s\n", obj.toString())
+
+	opts := &apiObjectOpts{
+		importPath: d.Get("importPath").(string),
+	}	
+	if opts.importPath != "" {
+		d.SetId(opts.importPath)
+		_, err := resourceRestAPIImport(d, meta)
+		return err
+	}
 
 	err = obj.createObject()
 	if err == nil {
@@ -413,6 +427,9 @@ func buildAPIObjectOpts(d *schema.ResourceData) (*apiObjectOpts, error) {
 	}
 	if v, ok := d.GetOk("query_string"); ok {
 		opts.queryString = v.(string)
+	}
+	if v, ok := d.GetOk("import_path"); ok {
+		opts.importPath = v.(string)
 	}
 
 	readSearch := expandReadSearch(d.Get("read_search").(map[string]interface{}))
