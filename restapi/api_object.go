@@ -267,9 +267,9 @@ func (obj *APIObject) createObject() error {
 	   protect here also. If no id is set, and the API does not respond
 	   with the id of whatever gets created, we have no way to know what
 	   the object's id will be. Abandon this attempt */
-	if obj.id == "" && !obj.apiClient.writeReturnsObject && !obj.apiClient.createReturnsObject {
-		return fmt.Errorf("provided object does not have an id set and the client is not configured to read the object from a POST or PUT response; please set write_returns_object to true, or include an id in the object's data")
-	}
+	// if obj.id == "" && !obj.apiClient.writeReturnsObject && !obj.apiClient.createReturnsObject {
+	// 	return fmt.Errorf("provided object does not have an id set and the client is not configured to read the object from a POST or PUT response; please set write_returns_object to true, or include an id in the object's data")
+	// }
 
 	b, _ := json.Marshal(obj.data)
 
@@ -287,24 +287,22 @@ func (obj *APIObject) createObject() error {
 	}
 
 	/* We will need to sync state as well as get the object's ID */
-	if obj.apiClient.writeReturnsObject || obj.apiClient.createReturnsObject {
-		if obj.debug {
-			log.Printf("api_object.go: Parsing response from POST to update internal structures (write_returns_object=%t, create_returns_object=%t)...\n",
-				obj.apiClient.writeReturnsObject, obj.apiClient.createReturnsObject)
-		}
-		err = obj.updateState(resultString, obj.readSearch["results_key"])
-		/* Yet another failsafe. In case something terrible went wrong internally,
-		   bail out so the user at least knows that the ID did not get set. */
-		if obj.id == "" {
-			return fmt.Errorf("internal validation failed; object ID is not set, but *may* have been created; this should never happen")
-		}
-	} else {
-		if obj.debug {
-			log.Printf("api_object.go: Requesting created object from API (write_returns_object=%t, create_returns_object=%t)...\n",
-				obj.apiClient.writeReturnsObject, obj.apiClient.createReturnsObject)
-		}
-		err = obj.readObject()
+	if obj.debug {
+		log.Printf("api_object.go: Parsing response from POST to update internal structures ...\n")
 	}
+	err = obj.updateState(resultString, obj.readSearch["results_key"])
+	if err != nil {
+		return err
+	}
+	/* Yet another failsafe. In case something terrible went wrong internally,
+		bail out so the user at least knows that the ID did not get set. */
+	if obj.id == "" {
+		return fmt.Errorf("internal validation failed; object ID is not set, but *may* have been created; this should never happen")
+	}
+	if obj.debug {
+		log.Printf("api_object.go: Requesting created object from API...\n")
+	}
+	err = obj.readObject()
 	return err
 }
 

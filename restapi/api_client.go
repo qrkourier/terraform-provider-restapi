@@ -63,7 +63,7 @@ type APIClient struct {
 	httpClient          *http.Client
 	uri                 string
 	insecure            bool
-	caCertsFile       string
+	caCertsFile         string
 	username            string
 	password            string
 	zitiUsername        string
