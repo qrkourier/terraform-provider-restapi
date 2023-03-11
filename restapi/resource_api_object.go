@@ -433,6 +433,7 @@ func buildAPIObjectOpts(d *schema.ResourceData) (*apiObjectOpts, error) {
 
 	readSearch := expandReadSearch(d.Get("read_search").(map[string]interface{}))
 	opts.readSearch = readSearch
+	opts.readSearch["results_key"] = "data"
 
 	opts.data = d.Get("data").(string)
 	opts.debug = d.Get("debug").(bool)
