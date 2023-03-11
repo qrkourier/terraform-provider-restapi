@@ -26,11 +26,6 @@ func dataSourceRestAPI() *schema.Resource {
 				Description: "An optional query string to send when performing the search.",
 				Optional:    true,
 			},
-			"import_path": {
-				Type:        schema.TypeString,
-				Description: "An optional path/id to import and update, not create.",
-				Optional:    true,
-			},
 			"read_query_string": {
 				Type: schema.TypeString,
 				/* Setting to "not-set" helps differentiate between the cases where
@@ -54,6 +49,7 @@ func dataSourceRestAPI() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "When issuing a GET to the path, this JSON key is used to locate the results array. The format is 'field/field/field'. Example: 'results/values'. If omitted, it is assumed the results coming back are already an array and are to be used exactly as-is.",
 				Optional:    true,
+				Default:     "data",
 			},
 			"id_attribute": {
 				Type:        schema.TypeString,

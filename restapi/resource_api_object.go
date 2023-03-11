@@ -114,11 +114,6 @@ func resourceRestAPI() *schema.Resource {
 				Description: "Query string to be included in the path",
 				Optional:    true,
 			},
-			"import_path": {
-				Type:        schema.TypeString,
-				Description: "path/id to import and update, not create",
-				Optional:    true,
-			},
 			"api_data": {
 				Type: schema.TypeMap,
 				Elem: &schema.Schema{
@@ -215,7 +210,13 @@ func resourceRestAPIImport(d *schema.ResourceData, meta interface{}) (imported [
 		id = input[n+1:]
 	}
 
-	d.Set("data", fmt.Sprintf(`{ "id": "%s" }`, id))
+	// if we're auto-importing because the resource has an 'id' attribute, then
+	// ensure we're not discarding additional attributes in the declared resource state
+	declaredStateJsonBytes := []byte(d.Get("data").(string))
+	declaredStateMap := make(map[string]interface{})
+	json.Unmarshal(declaredStateJsonBytes, &declaredStateMap)
+	declaredStateMap["id"] = id
+	d.Set("data", declaredStateMap)
 	d.SetId(id)
 
 	/* Troubleshooting is hard enough. Emit log messages so TF_LOG
@@ -246,12 +247,13 @@ func resourceRestAPICreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	log.Printf("resource_api_object.go: Create routine called. Object built:\n%s\n", obj.toString())
 
-	opts := &apiObjectOpts{
-		importPath: d.Get("importPath").(string),
-	}	
-	if opts.importPath != "" {
-		d.SetId(opts.importPath)
+	if obj.id != "" {
+		d.SetId(fmt.Sprintf("%s/%s", obj.searchPath, obj.id))
 		_, err := resourceRestAPIImport(d, meta)
+		if err != nil {
+			return err
+		}
+		err = resourceRestAPIUpdate(d, meta)
 		return err
 	}
 
@@ -427,9 +429,6 @@ func buildAPIObjectOpts(d *schema.ResourceData) (*apiObjectOpts, error) {
 	}
 	if v, ok := d.GetOk("query_string"); ok {
 		opts.queryString = v.(string)
-	}
-	if v, ok := d.GetOk("import_path"); ok {
-		opts.importPath = v.(string)
 	}
 
 	readSearch := expandReadSearch(d.Get("read_search").(map[string]interface{}))
