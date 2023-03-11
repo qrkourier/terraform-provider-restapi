@@ -322,11 +322,18 @@ func resourceRestAPIDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 	log.Printf("resource_api_object.go: Delete routine called. Object built:\n%s\n", obj.toString())
 
-	err = obj.deleteObject()
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			/* 404 means it doesn't exist. Call that good enough */
-			err = nil
+	// kludge to detect un-deletable identities of type Router because only they
+	// use the PATCH method, consider adding a resource config like patch_only
+	// or skip_delete
+	if obj.updateMethod == "PATCH" {
+		err = nil
+	} else {
+		err = obj.deleteObject()
+		if err != nil {
+			if strings.Contains(err.Error(), "404") {
+				/* 404 means it doesn't exist. Call that good enough */
+				err = nil
+			}
 		}
 	}
 	return err
