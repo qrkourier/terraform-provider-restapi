@@ -36,6 +36,18 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("REST_API_PASSWORD", nil),
 				Description: "When set, will use this password for BASIC auth to the API.",
 			},
+			"ziti_username": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REST_API_ZITI_USERNAME", nil),
+				Description: "When set, will use this username for Ziti auth to the API.",
+			},
+			"ziti_password": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REST_API_ZITI_PASSWORD", nil),
+				Description: "When set, will use this password for Ziti auth to the API.",
+			},
 			"headers": {
 				Type:        schema.TypeMap,
 				Elem:        schema.TypeString,
@@ -168,6 +180,12 @@ func Provider() *schema.Provider {
 					},
 				},
 			},
+			"cacerts_file": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REST_API_CACERTS_STRING", nil),
+				Description: "One or more CA certs to trust as a PEM bundle.",
+			},
 			"cert_string": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -227,8 +245,11 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 	opt := &apiClientOpt{
 		uri:                 d.Get("uri").(string),
 		insecure:            d.Get("insecure").(bool),
+		caCertsFile:         d.Get("cacerts_file").(string),
 		username:            d.Get("username").(string),
 		password:            d.Get("password").(string),
+		zitiUsername:        d.Get("ziti_username").(string),
+		zitiPassword:        d.Get("ziti_password").(string),
 		headers:             headers,
 		useCookies:          d.Get("use_cookies").(bool),
 		timeout:             d.Get("timeout").(int),
@@ -277,6 +298,9 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 	}
 	if v, ok := d.GetOk("key_file"); ok {
 		opt.keyFile = v.(string)
+	}
+	if v, ok := d.GetOk("cacerts_file"); ok {
+		opt.caCertsFile = v.(string)
 	}
 	if v, ok := d.GetOk("cert_string"); ok {
 		opt.certString = v.(string)

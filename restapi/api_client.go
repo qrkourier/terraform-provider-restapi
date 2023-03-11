@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"os"
 	"log"
 	"math"
 	"net/http"
@@ -15,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Jeffail/gabs"
+	zitiUtil "github.com/openziti/ziti/ziti/util"
 	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/time/rate"
 )
@@ -24,6 +28,8 @@ type apiClientOpt struct {
 	insecure            bool
 	username            string
 	password            string
+	zitiUsername        string
+	zitiPassword        string
 	headers             map[string]string
 	timeout             int
 	idAttribute         string
@@ -46,18 +52,23 @@ type apiClientOpt struct {
 	oauthEndpointParams url.Values
 	certFile            string
 	keyFile             string
+	caCertsFile		string
 	certString          string
 	keyString           string
 	debug               bool
 }
 
-/*APIClient is a HTTP client with additional controlling fields*/
+/*APIClient is an HTTP client with additional controlling fields*/
 type APIClient struct {
 	httpClient          *http.Client
 	uri                 string
 	insecure            bool
+	caCertsFile         string
 	username            string
 	password            string
+	zitiUsername        string
+	zitiPassword        string
+	zitiToken           string
 	headers             map[string]string
 	idAttribute         string
 	createMethod        string
@@ -75,7 +86,7 @@ type APIClient struct {
 	oauthConfig         *clientcredentials.Config
 }
 
-//NewAPIClient makes a new api client for RESTful calls
+// NewAPIClient makes a new api client for RESTful calls
 func NewAPIClient(opt *apiClientOpt) (*APIClient, error) {
 	if opt.debug {
 		log.Printf("api_client.go: Constructing debug api_client\n")
@@ -130,6 +141,26 @@ func NewAPIClient(opt *apiClientOpt) (*APIClient, error) {
 		tlsConfig.Certificates = []tls.Certificate{cert}
 	}
 
+	if tlsConfig.RootCAs == nil && opt.caCertsFile != "" {
+		// create a Certificate pool to hold one or more CA certificates
+		rootCAPool := x509.NewCertPool()
+
+		// read CA certificates and add to the Certificate Pool
+		rootCA, err := os.ReadFile(opt.caCertsFile)
+		if err != nil {
+			log.Fatalf("reading CA certs file failed : %v", err)
+		}
+		rootCAPool.AppendCertsFromPEM(rootCA)
+		if opt.debug {
+			log.Printf("RootCA loaded from file: %s", opt.caCertsFile)
+		}
+
+		// in the http client configuration, add TLS configuration and add the RootCAs
+		tlsConfig.RootCAs = rootCAPool
+	} else {
+		tlsConfig.RootCAs = x509.NewCertPool()
+	}
+
 	tr := &http.Transport{
 		TLSClientConfig: tlsConfig,
 		Proxy:           http.ProxyFromEnvironment,
@@ -155,8 +186,11 @@ func NewAPIClient(opt *apiClientOpt) (*APIClient, error) {
 		rateLimiter:         rateLimiter,
 		uri:                 opt.uri,
 		insecure:            opt.insecure,
+		caCertsFile:		 opt.caCertsFile,
 		username:            opt.username,
 		password:            opt.password,
+		zitiUsername:        opt.zitiUsername,
+		zitiPassword:        opt.zitiPassword,
 		headers:             opt.headers,
 		idAttribute:         opt.idAttribute,
 		createMethod:        opt.createMethod,
@@ -194,8 +228,11 @@ func (client *APIClient) toString() string {
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("uri: %s\n", client.uri))
 	buffer.WriteString(fmt.Sprintf("insecure: %t\n", client.insecure))
+	buffer.WriteString(fmt.Sprintf("cacerts_file: %s\n", client.caCertsFile))
 	buffer.WriteString(fmt.Sprintf("username: %s\n", client.username))
 	buffer.WriteString(fmt.Sprintf("password: %s\n", client.password))
+	buffer.WriteString(fmt.Sprintf("ziti_username: %s\n", client.zitiUsername))
+	buffer.WriteString(fmt.Sprintf("ziti_password: %s\n", client.zitiPassword))
 	buffer.WriteString(fmt.Sprintf("id_attribute: %s\n", client.idAttribute))
 	buffer.WriteString(fmt.Sprintf("write_returns_object: %t\n", client.writeReturnsObject))
 	buffer.WriteString(fmt.Sprintf("create_returns_object: %t\n", client.createReturnsObject))
@@ -209,8 +246,11 @@ func (client *APIClient) toString() string {
 	return buffer.String()
 }
 
-/* Helper function that handles sending/receiving and handling
-   of HTTP data in and out. */
+/*
+Helper function that handles sending/receiving and handling
+
+	of HTTP data in and out.
+*/
 func (client *APIClient) sendRequest(method string, path string, data string) (string, error) {
 	fullURI := client.uri + path
 	var req *http.Request
@@ -263,6 +303,33 @@ func (client *APIClient) sendRequest(method string, path string, data string) (s
 		req.SetBasicAuth(client.username, client.password)
 	}
 
+	if client.zitiUsername != "" && client.zitiPassword != "" {
+		if client.zitiToken == "" {
+			container := gabs.New()
+			_, _ = container.SetP(client.zitiUsername, "username")
+			_, _ = container.SetP(client.zitiPassword, "password")
+			body := container.String()
+
+			zitiLogin, err := zitiUtil.EdgeControllerLogin(client.uri, client.caCertsFile, body, log.Writer(), false, 30, true)
+			if err != nil {
+				return "", err
+			}
+
+			if !zitiLogin.ExistsP("data.token") {
+				return "", fmt.Errorf("no session token returned from login request to %v. Received: %v", client.uri, zitiLogin.String())
+			}
+
+			var ok bool
+			client.zitiToken, ok = zitiLogin.Path("data.token").Data().(string)
+
+			if !ok {
+				return "", fmt.Errorf("session token returned from login request to %v is not in the expected format. Received: %v", client.uri, zitiLogin.String())
+			}
+
+		}
+		req.Header.Set("zt-session", client.zitiToken)
+	}
+
 	if client.debug {
 		log.Printf("api_client.go: Request headers:\n")
 		for name, headers := range req.Header {
@@ -304,7 +371,7 @@ func (client *APIClient) sendRequest(method string, path string, data string) (s
 		}
 	}
 
-	bodyBytes, err2 := ioutil.ReadAll(resp.Body)
+	bodyBytes, err2 := io.ReadAll(resp.Body)
 	resp.Body.Close()
 
 	if err2 != nil {

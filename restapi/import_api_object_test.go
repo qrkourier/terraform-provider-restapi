@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Mastercard/terraform-provider-restapi/fakeserver"
+	"github.com/qrkourier/terraform-provider-restapi/fakeserver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 

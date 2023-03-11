@@ -210,7 +210,13 @@ func resourceRestAPIImport(d *schema.ResourceData, meta interface{}) (imported [
 		id = input[n+1:]
 	}
 
-	d.Set("data", fmt.Sprintf(`{ "id": "%s" }`, id))
+	// if we're auto-importing because the resource has an 'id' attribute, then
+	// ensure we're not discarding additional attributes in the declared resource state
+	declaredStateJsonBytes := []byte(d.Get("data").(string))
+	declaredStateMap := make(map[string]interface{})
+	json.Unmarshal(declaredStateJsonBytes, &declaredStateMap)
+	declaredStateMap["id"] = id
+	d.Set("data", declaredStateMap)
 	d.SetId(id)
 
 	/* Troubleshooting is hard enough. Emit log messages so TF_LOG
@@ -240,6 +246,16 @@ func resourceRestAPICreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	log.Printf("resource_api_object.go: Create routine called. Object built:\n%s\n", obj.toString())
+
+	if obj.id != "" {
+		d.SetId(fmt.Sprintf("%s/%s", obj.searchPath, obj.id))
+		_, err := resourceRestAPIImport(d, meta)
+		if err != nil {
+			return err
+		}
+		err = resourceRestAPIUpdate(d, meta)
+		return err
+	}
 
 	err = obj.createObject()
 	if err == nil {
@@ -417,6 +433,7 @@ func buildAPIObjectOpts(d *schema.ResourceData) (*apiObjectOpts, error) {
 
 	readSearch := expandReadSearch(d.Get("read_search").(map[string]interface{}))
 	opts.readSearch = readSearch
+	opts.readSearch["results_key"] = "data"
 
 	opts.data = d.Get("data").(string)
 	opts.debug = d.Get("debug").(bool)

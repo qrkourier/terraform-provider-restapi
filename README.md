@@ -37,9 +37,9 @@ Have a look at the [examples directory](./examples/) for some use cases.
 
 This provider has only a few moving components, but LOTS of configurable parameters:
 
-* [provider documentation](https://registry.terraform.io/providers/Mastercard/restapi/latest/docs)
-* [restapi_object resource documentation](https://registry.terraform.io/providers/Mastercard/restapi/latest/docs/resources/object)
-* [restapi_object datasource documentation](https://registry.terraform.io/providers/Mastercard/restapi/latest/docs/data-sources/object)
+* [provider documentation](https://registry.terraform.io/providers/qrkourier/restapi/latest/docs)
+* [restapi_object resource documentation](https://registry.terraform.io/providers/qrkourier/restapi/latest/docs/resources/object)
+* [restapi_object datasource documentation](https://registry.terraform.io/providers/qrkourier/restapi/latest/docs/data-sources/object)
 
 ## Usage
 
@@ -99,7 +99,7 @@ To make development easy, you can use the Docker image [druggeri/tdk](https://hu
 
 ```bash
 docker run -it --name tdk --rm -v "$HOME/go":/root/go druggeri/tdk
-go get github.com/Mastercard/terraform-provider-restapi
-cd ~/go/src/github.com/Mastercard/terraform-provider-restapi
+go get github.com/qrkourier/terraform-provider-restapi
+cd ~/go/src/github.com/qrkourier/terraform-provider-restapi
 #Hack hack hack
 ```

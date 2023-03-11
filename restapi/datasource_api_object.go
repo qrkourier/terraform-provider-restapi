@@ -49,6 +49,7 @@ func dataSourceRestAPI() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "When issuing a GET to the path, this JSON key is used to locate the results array. The format is 'field/field/field'. Example: 'results/values'. If omitted, it is assumed the results coming back are already an array and are to be used exactly as-is.",
 				Optional:    true,
+				Default:     "data",
 			},
 			"id_attribute": {
 				Type:        schema.TypeString,

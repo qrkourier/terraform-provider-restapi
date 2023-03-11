@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/Mastercard/terraform-provider-restapi/restapi"
+	"github.com/qrkourier/terraform-provider-restapi/restapi"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
@@ -24,7 +24,7 @@ func main() {
 	}
 
 	if debugMode {
-		err := plugin.Debug(context.Background(), "terraform.netfoundry.io/openziti/restapi", opts)
+		err := plugin.Debug(context.Background(), "registry.terraform.io/qrkourier/restapi", opts)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
