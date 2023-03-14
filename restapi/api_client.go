@@ -8,12 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"log"
 	"math"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -52,7 +52,8 @@ type apiClientOpt struct {
 	oauthEndpointParams url.Values
 	certFile            string
 	keyFile             string
-	caCertsFile		string
+	caCertsFile         string
+	caCertsString       string
 	certString          string
 	keyString           string
 	debug               bool
@@ -64,6 +65,7 @@ type APIClient struct {
 	uri                 string
 	insecure            bool
 	caCertsFile         string
+	caCertsString       string
 	username            string
 	password            string
 	zitiUsername        string
@@ -141,18 +143,26 @@ func NewAPIClient(opt *apiClientOpt) (*APIClient, error) {
 		tlsConfig.Certificates = []tls.Certificate{cert}
 	}
 
-	if tlsConfig.RootCAs == nil && opt.caCertsFile != "" {
+	if tlsConfig.RootCAs == nil && (opt.caCertsFile != "" || opt.caCertsString != "") {
 		// create a Certificate pool to hold one or more CA certificates
 		rootCAPool := x509.NewCertPool()
 
 		// read CA certificates and add to the Certificate Pool
-		rootCA, err := os.ReadFile(opt.caCertsFile)
-		if err != nil {
-			log.Fatalf("reading CA certs file failed : %v", err)
-		}
-		rootCAPool.AppendCertsFromPEM(rootCA)
-		if opt.debug {
-			log.Printf("RootCA loaded from file: %s", opt.caCertsFile)
+		if opt.caCertsFile != "" {
+			rootCA, err := os.ReadFile(opt.caCertsFile)
+			if err != nil {
+				log.Fatalf("reading CA certs file failed : %v", err)
+			}
+			rootCAPool.AppendCertsFromPEM(rootCA)
+			if opt.debug {
+				log.Printf("RootCA loaded from file: %s", opt.caCertsFile)
+			}
+		} else {
+			rootCA := []byte(opt.caCertsString)
+			if opt.debug {
+				log.Printf("RootCA loaded from string: %s", opt.caCertsString)
+			}
+			rootCAPool.AppendCertsFromPEM(rootCA)
 		}
 
 		// in the http client configuration, add TLS configuration and add the RootCAs
@@ -186,7 +196,8 @@ func NewAPIClient(opt *apiClientOpt) (*APIClient, error) {
 		rateLimiter:         rateLimiter,
 		uri:                 opt.uri,
 		insecure:            opt.insecure,
-		caCertsFile:		 opt.caCertsFile,
+		caCertsFile:         opt.caCertsFile,
+		caCertsString:       opt.caCertsString,
 		username:            opt.username,
 		password:            opt.password,
 		zitiUsername:        opt.zitiUsername,
@@ -229,6 +240,7 @@ func (client *APIClient) toString() string {
 	buffer.WriteString(fmt.Sprintf("uri: %s\n", client.uri))
 	buffer.WriteString(fmt.Sprintf("insecure: %t\n", client.insecure))
 	buffer.WriteString(fmt.Sprintf("cacerts_file: %s\n", client.caCertsFile))
+	buffer.WriteString(fmt.Sprintf("cacerts_string: %s\n", client.caCertsString))
 	buffer.WriteString(fmt.Sprintf("username: %s\n", client.username))
 	buffer.WriteString(fmt.Sprintf("password: %s\n", client.password))
 	buffer.WriteString(fmt.Sprintf("ziti_username: %s\n", client.zitiUsername))
@@ -310,6 +322,21 @@ func (client *APIClient) sendRequest(method string, path string, data string) (s
 			_, _ = container.SetP(client.zitiPassword, "password")
 			body := container.String()
 
+			if client.caCertsFile == "" && client.caCertsString != "" {
+				// write string to temp file for login function that only takes a file
+				tmpFile, err := os.CreateTemp("", "ctrl-plane-cas-*.crt")
+				if err != nil {
+					return "", fmt.Errorf("failed to allocate a temporary file to save the Ziti root CA PEM string: %s", err)
+				}
+				defer os.Remove(tmpFile.Name())
+				if _, err := tmpFile.Write([]byte(client.caCertsString)); err != nil {
+					return "", fmt.Errorf("failed to write Ziti root CA PEM string to temporary file", err)
+				}
+				client.caCertsFile = tmpFile.Name()
+				if client.debug {
+					log.Printf("wrote Ziti root CA PEM string to temporary file '%s'", client.caCertsFile)
+				}
+			}
 			zitiLogin, err := zitiUtil.EdgeControllerLogin(client.uri, client.caCertsFile, body, log.Writer(), false, 30, true)
 			if err != nil {
 				return "", err
