@@ -17,10 +17,12 @@ You'll probably need to get the provider configuration from remote state provide
 
 ## OpenZiti Authentication
 
-You must provide at least one of `cacerts_file` or `cacerts_string` with the OpenZiti Controller's CA bundle as PEM
+You must provide at least one of `cacerts_file` or `cacerts_string` with the OpenZiti Controller's CA bundle as PEM.
+
 You must provide at least one of (`ziti_username` and `ziti_password`) or ((`cert_file` or `cert_string`) and (`key_file` or `key_string`)).
 
 You must have an `updb` Authenticator to use password auth.
+
 You must have a `cert` Authenticator and compatible Authentication Policy to use cert auth.
 
 {{ .SchemaMarkdown | trimspace }}
