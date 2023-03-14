@@ -7,10 +7,6 @@ description: |-
 
 # Data Source `restapi_object`
 
-
-
-
-
 ## Schema
 
 ### Required
