@@ -180,11 +180,17 @@ func Provider() *schema.Provider {
 					},
 				},
 			},
-			"cacerts_file": {
+			"cacerts_string": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("REST_API_CACERTS_STRING", nil),
-				Description: "One or more CA certs to trust as a PEM bundle.",
+				Description: "One or more CA certs to trust as a PEM bundle in a string.",
+			},
+			"cacerts_file": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("REST_API_CACERTS_FILE", nil),
+				Description: "One or more CA certs to trust as a PEM bundle in a file.",
 			},
 			"cert_string": {
 				Type:        schema.TypeString,
@@ -246,6 +252,7 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 		uri:                 d.Get("uri").(string),
 		insecure:            d.Get("insecure").(bool),
 		caCertsFile:         d.Get("cacerts_file").(string),
+		caCertsString:       d.Get("cacerts_string").(string),
 		username:            d.Get("username").(string),
 		password:            d.Get("password").(string),
 		zitiUsername:        d.Get("ziti_username").(string),
@@ -301,6 +308,9 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 	}
 	if v, ok := d.GetOk("cacerts_file"); ok {
 		opt.caCertsFile = v.(string)
+	}
+	if v, ok := d.GetOk("cacerts_string"); ok {
+		opt.caCertsString = v.(string)
 	}
 	if v, ok := d.GetOk("cert_string"); ok {
 		opt.certString = v.(string)
