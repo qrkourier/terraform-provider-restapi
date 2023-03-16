@@ -330,7 +330,7 @@ func (client *APIClient) sendRequest(method string, path string, data string) (s
 				}
 				defer os.Remove(tmpFile.Name())
 				if _, err := tmpFile.Write([]byte(client.caCertsString)); err != nil {
-					return "", fmt.Errorf("failed to write Ziti root CA PEM string to temporary file", err)
+					return "", fmt.Errorf("failed to write Ziti root CA PEM string to temporary file: %s", err)
 				}
 				client.caCertsFile = tmpFile.Name()
 				if client.debug {
