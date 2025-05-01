@@ -1,3 +1,9 @@
+# Deprecated
+
+Use: https://registry.terraform.io/providers/netfoundry/ziti/latest
+
+---
+
 [![Build Status](https://travis-ci.com/burbon/terraform-provider-restapi.svg?branch=master)](https://travis-ci.com/burbon/terraform-provider-restapi)
 [![Coverage Status](https://coveralls.io/repos/github/burbon/terraform-provider-restapi/badge.svg?branch=master)](https://coveralls.io/github/burbon/terraform-provider-restapi?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/burbon/terraform-provider-restapi)](https://goreportcard.com/report/github.com/burbon/terraform-provider-restapi)
